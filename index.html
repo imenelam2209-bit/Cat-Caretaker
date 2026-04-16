@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cat Care</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cat Care">
+<meta name="theme-color" content="#F7F6F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1C1E" media="(prefers-color-scheme: dark)">
+<style>
+:root{
+  --bg:#F7F6F3;--card:#FFF;--text:#1A1A1A;--sub:#6B6B6B;
+  --border:rgba(0,0,0,0.08);--nav:rgba(247,246,243,0.94);
+  --blue:#007AFF;--green:#28CD41;--amber:#EF9F27;--orange:#FF9500;
+  --red:#FF3B30;--teal:#1AAF5D;--input:#FFF
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1C1C1E;--card:#2C2C2E;--text:#F2F2F7;--sub:#8E8E93;
+  --border:rgba(255,255,255,0.1);--nav:rgba(28,28,30,0.94);--input:#3A3A3C}
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+  -webkit-font-smoothing:antialiased;color:var(--text)}
+body{padding-bottom:env(safe-area-inset-bottom)}
+.app{max-width:430px;margin:0 auto;min-height:100dvh}
+
+/* ── Auth ─────────────────── */
+.auth-wrap{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px}
+.auth-logo{margin-bottom:32px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.auth-logo-av{width:72px;height:72px;background:#F5C4B3;border-radius:22px;display:flex;align-items:center;justify-content:center}
+.auth-logo h1{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.auth-logo p{font-size:15px;color:var(--sub);text-align:center;line-height:1.5;margin-top:2px}
+.auth-box{background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:360px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.08),0 0 0 0.5px rgba(0,0,0,0.05)}
+.auth-box h2{font-size:18px;font-weight:700;margin-bottom:18px;letter-spacing:-.3px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--sub);margin-bottom:5px;letter-spacing:.01em}
+.field input{width:100%;background:var(--input);border:1px solid var(--border);border-radius:12px;
+  padding:13px 14px;font-size:16px;color:var(--text);font-family:inherit;outline:none;
+  transition:border-color .15s;-webkit-appearance:none}
+.field input:focus{border-color:var(--blue)}
+.auth-err{background:#FFF3E0;border:1px solid #FFCC80;border-radius:10px;padding:10px 12px;
+  font-size:13px;color:#7F4600;margin-bottom:14px;display:none}
+@media(prefers-color-scheme:dark){.auth-err{background:#3A2E0A;border-color:#7A5500;color:#FFB300}}
+.auth-err.show{display:block}
+.btn-primary{width:100%;background:var(--blue);color:#FFF;border:none;border-radius:14px;
+  padding:14px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:opacity .15s;letter-spacing:-.1px}
+.btn-primary:active{opacity:.75}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.auth-switch{text-align:center;margin-top:18px;font-size:14px;color:var(--sub)}
+.auth-switch button{background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer;
+  font-family:inherit;font-weight:500;padding:0}
+
+/* ── Main app ─────────────── */
+.header{padding:52px 20px 10px;position:sticky;top:0;background:var(--nav);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:10;border-bottom:.5px solid var(--border)}
+.header-inner{display:flex;align-items:center;gap:14px}
+.av{width:50px;height:50px;border-radius:50%;background:#F5C4B3;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cat-name{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.cat-sub{font-size:12px;color:var(--sub);margin-top:2px}
+.scroll{overflow-y:auto;padding:14px 16px 110px}
+
+/* ── Loading ──────────────── */
+.loading{display:flex;align-items:center;justify-content:center;min-height:60dvh;flex-direction:column;gap:14px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:14px;color:var(--sub)}
+
+/* ── Banners ──────────────── */
+.banner{border-radius:14px;padding:13px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.banner.warn{background:#FFF3E0;border:1px solid #FFCC80}
+.banner.danger{background:#FFEBEE;border:1px solid #EF9A9A}
+@media(prefers-color-scheme:dark){
+  .banner.warn{background:#3A2E0A;border-color:#7A5500}
+  .banner.danger{background:#3A0A0A;border-color:#7A1010}
+}
+.b-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.banner.warn .b-icon{background:var(--orange)}.banner.danger .b-icon{background:var(--red)}
+.b-title{font-size:13px;font-weight:600}
+.banner.warn .b-title{color:#7F4600}.banner.danger .b-title{color:#880000}
+@media(prefers-color-scheme:dark){.banner.warn .b-title{color:#FFCC80}.banner.danger .b-title{color:#FF8A80}}
+.b-body{font-size:12px;margin-top:2px}
+.banner.warn .b-body{color:#A65E00}.banner.danger .b-body{color:#C00}
+@media(prefers-color-scheme:dark){.banner.warn .b-body{color:#FFB300}.banner.danger .b-body{color:#FF6B6B}}
+
+/* ── Cards ────────────────── */
+.card{background:var(--card);border-radius:18px;padding:18px;margin-bottom:12px;display:flex;
+  align-items:center;gap:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 .5px rgba(0,0,0,0.04)}
+.ring-wrap{position:relative;width:78px;height:78px;flex-shrink:0}
+.ring-lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.ring-val{font-size:15px;font-weight:700;line-height:1;letter-spacing:-.3px}
+.ring-unit{font-size:10px;color:var(--sub);margin-top:2px;font-weight:500}
+.c-info{flex:1;min-width:0}
+.c-label{font-size:16px;font-weight:600;margin-bottom:3px;letter-spacing:-.2px}
+.c-status{font-size:13px;color:var(--sub);margin-bottom:12px;line-height:1.4}
+.c-status.warn{color:#B36B08;font-weight:500}
+.c-status.danger{color:#CC0000;font-weight:600}
+@media(prefers-color-scheme:dark){.c-status.warn{color:#FFB300}.c-status.danger{color:#FF6B6B}}
+.mark-btn{display:inline-flex;align-items:center;height:35px;padding:0 17px;border-radius:18px;
+  border:1px solid var(--border);background:var(--bg);font-size:14px;font-weight:500;color:var(--text);
+  cursor:pointer;transition:transform .12s,opacity .12s;font-family:inherit}
+.mark-btn:active{transform:scale(0.95);opacity:.7}
+.mark-btn.done{background:#E8F5E9;border-color:#A5D6A7;color:#1B5E20}
+.mark-btn:disabled{opacity:.5;cursor:default}
+@media(prefers-color-scheme:dark){.mark-btn.done{background:#1B3320;border-color:#388E3C;color:#A5D6A7}}
+
+/* ── Nav ──────────────────── */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;
+  background:var(--nav);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:.5px solid var(--border);padding:8px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:20}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0}
+.nav-label{font-size:10px;font-weight:500;color:var(--sub)}
+.nav-item.on .nav-label{color:var(--blue)}
+
+/* ── Misc ─────────────────── */
+.sec-lbl{font-size:12px;font-weight:600;color:var(--sub);padding:0 4px 8px;margin-top:6px;
+  text-transform:uppercase;letter-spacing:.06em}
+.hist-list{background:var(--card);border-radius:16px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:14px}
+.hist-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid var(--border)}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.hist-text{flex:1;font-size:14px}
+.hist-time{font-size:12px;color:var(--sub);white-space:nowrap}
+.empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:15px;line-height:1.8}
+
+.s-block{background:var(--card);border-radius:16px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:8px}
+.s-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:.5px solid var(--border)}
+.s-row:last-child{border-bottom:none}
+.s-lbl{font-size:15px}
+.s-sub{font-size:12px;color:var(--sub);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.s-val{font-size:15px;color:var(--blue);font-weight:500}
+.badge{background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px}
+@media(prefers-color-scheme:dark){.badge{background:#0D2137;color:#90CAF9}}
+
+select,input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--border);
+  border-radius:9px;padding:7px 10px;font-size:14px;color:var(--text);font-family:inherit;
+  outline:none;-webkit-appearance:none;appearance:none}
+select{padding-right:26px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6B6B' fill='none' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center}
+
+.tgl{position:relative;display:inline-block;width:51px;height:31px;cursor:pointer;flex-shrink:0}
+.tgl input{position:absolute;opacity:0;width:0;height:0}
+.t-track{position:absolute;inset:0;background:#E5E5EA;border-radius:15.5px;transition:.25s}
+@media(prefers-color-scheme:dark){.t-track{background:#3A3A3C}}
+.tgl input:checked+.t-track{background:var(--green)}
+.t-thumb{position:absolute;height:27px;width:27px;left:2px;top:2px;background:#FFF;border-radius:50%;
+  box-shadow:0 2px 5px rgba(0,0,0,0.25);transition:transform .25s;pointer-events:none}
+.tgl input:checked~.t-thumb{transform:translateX(20px)}
+
+.del-lbl{color:var(--red)!important}
+.logout-row{cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────────
+const TOKEN_KEY = 'catcare_token';
+const LITTER_H = {
+  clumping:    {1:14*24, 2:10*24, 3:7*24},
+  nonclumping: {1:7*24,  2:5*24,  3:3*24},
+  silica:      {1:21*24, 2:14*24, 3:10*24}
+};
+const LITTER_WARN = 0.65;
+const OTHER_WARN  = 0.80;
+const TRK = [
+  {id:'litter', label:'Litter box', col:'#EF9F27', warnCol:'#FF9500', dangerCol:'#FF3B30', trackCol:'#F5EDDA'},
+  {id:'food',   label:'Food',       col:'#1AAF5D', warnCol:'#FF9500', dangerCol:'#FF3B30', trackCol:'#D2EDDA'},
+  {id:'water',  label:'Water',      col:'#007AFF', warnCol:'#FF9500', dangerCol:'#FF3B30', trackCol:'#D0E5FF'}
+];
+const NAV_I = {
+  home:`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`,
+  history:`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 00-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0013 21a9 9 0 000-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>`,
+  settings:`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`
+};
+const BELL=`<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>`;
+const PAW=`<svg width="28" height="28" viewBox="0 0 100 100" fill="#D85A30"><ellipse cx="50" cy="62" rx="22" ry="18"/><ellipse cx="23" cy="38" rx="9" ry="7"/><ellipse cx="40" cy="28" rx="9" ry="7"/><ellipse cx="60" cy="28" rx="9" ry="7"/><ellipse cx="77" cy="38" rx="9" ry="7"/></svg>`;
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let view = 'home';
+let authView = 'login'; // 'login' | 'register'
+let appData = null;     // loaded from API
+let loading = false;
+
+// ── API helper ─────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const res = await fetch(path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? {Authorization: `Bearer ${token}`} : {})
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function hrsElapsed(ts){ return ts ? (Date.now()-ts)/3600000 : Infinity; }
+function timeAgo(ts){
+  if(!ts)return'never';
+  const d=Date.now()-ts,m=Math.floor(d/60000);
+  if(m<1)return'just now';if(m<60)return m+'m ago';
+  const h=Math.floor(m/60);if(h<24)return h+'h ago';
+  return Math.floor(h/24)+'d ago';
+}
+function litterThresh(tr){ return LITTER_H[tr.litterType||'clumping']?.[Math.min(tr.numCats||1,3)]||14*24; }
+function thresh(id,tr){ return id==='litter'?litterThresh(tr):tr.h; }
+function prog(id,tr){
+  const last=tr.logs[tr.logs.length-1];
+  const el=hrsElapsed(last?.ts);
+  return el===Infinity?0:el/thresh(id,tr);
+}
+function warnAt(id){ return id==='litter'?LITTER_WARN:OTHER_WARN; }
+function ringCol(id,p){ const t=TRK.find(x=>x.id===id); return p>=1?t.dangerCol:p>=warnAt(id)?t.warnCol:t.col; }
+function statusInfo(id,tr){
+  const p=prog(id,tr),last=tr.logs[tr.logs.length-1];
+  if(!last)return{txt:'Not tracked yet',cls:''};
+  if(p>=1)return{txt:'Overdue — change it now',cls:'danger'};
+  if(p>=warnAt(id))return{txt:'You should change it soon',cls:'warn'};
+  if(p>=0.4)return{txt:'Getting there',cls:''};
+  return{txt:'All good',cls:''};
+}
+function centerDisplay(id,tr){
+  const last=tr.logs[tr.logs.length-1];
+  if(!last)return{v:'—',u:''};
+  const el=hrsElapsed(last.ts);
+  if(id==='litter'&&el>=24)return{v:Math.min(Math.floor(el/24),99),u:'d'};
+  return{v:Math.min(Math.floor(el),99),u:'h'};
+}
+function ringSVG(id,p,col,trackCol){
+  const sz=78,sw=7,r=(sz-sw)/2,c=+(2*Math.PI*r).toFixed(2);
+  const cp=Math.min(p,1),off=+(c*(1-cp)).toFixed(2),stroke=ringCol(id,p);
+  return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" style="transform:rotate(-90deg)">
+    <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${trackCol}" stroke-width="${sw}"/>
+    <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${stroke}" stroke-width="${sw}"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── Views ──────────────────────────────────────────────────────────────────────
+function authHTML(){
+  const isLogin = authView==='login';
+  return`<div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-av">${PAW}</div>
+      <h1>Cat Care</h1>
+      <p>Track litter, food & water.<br>Stay on top of your cat's routine.</p>
+    </div>
+    <div class="auth-box">
+      <h2>${isLogin?'Sign in':'Create account'}</h2>
+      <div class="auth-err" id="auth-err"></div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="f-pass" placeholder="${isLogin?'Your password':'Min. 6 characters'}" autocomplete="${isLogin?'current-password':'new-password'}"/>
+      </div>
+      <button class="btn-primary" id="auth-btn" onclick="submitAuth()">
+        ${isLogin?'Sign in':'Create account'}
+      </button>
+      <div class="auth-switch">
+        ${isLogin?'No account?':'Already have one?'}
+        <button onclick="toggleAuthView()">${isLogin?'Create one':'Sign in'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function loadingHTML(){
+  return`<div class="loading"><div class="spinner"></div><p>Loading…</p></div>`;
+}
+
+function homeHTML(){
+  const d=appData; let banners='';
+  for(const t of TRK){
+    const tr=d.trackers[t.id]; if(!tr.on)continue;
+    const p=prog(t.id,tr),last=tr.logs[tr.logs.length-1]; if(!last)continue;
+    if(p>=1){
+      const el=hrsElapsed(last.ts),over=el-thresh(t.id,tr);
+      const txt=t.id==='litter'
+        ?`Overdue by ${Math.floor(over/24)}d ${Math.floor(over%24)}h — change it now`
+        :`Overdue by ${Math.floor(over)}h — ${d.name} needs attention`;
+      banners+=`<div class="banner danger"><div class="b-icon">${BELL}</div><div class="b-txt"><div class="b-title">${t.label} is overdue</div><div class="b-body">${txt}</div></div></div>`;
+    } else if(p>=warnAt(t.id)){
+      const el=hrsElapsed(last.ts),th=thresh(t.id,tr);
+      const body=t.id==='litter'
+        ?`Day ${Math.floor(el/24)} of ${Math.round(th/24)} — you should probably change it soon`
+        :`${Math.floor(el)}h of ${tr.h}h — plan to top it up`;
+      banners+=`<div class="banner warn"><div class="b-icon">${BELL}</div><div class="b-txt"><div class="b-title">${t.label} — change it soon</div><div class="b-body">${body}</div></div></div>`;
+    }
+  }
+  let cards='';
+  for(const t of TRK){
+    const tr=d.trackers[t.id]; if(!tr.on)continue;
+    const p=prog(t.id,tr),cv=centerDisplay(t.id,tr),si=statusInfo(t.id,tr);
+    const last=tr.logs[tr.logs.length-1];
+    cards+=`<div class="card">
+      <div class="ring-wrap">${ringSVG(t.id,p,t.col,t.trackCol)}
+        <div class="ring-lbl"><span class="ring-val">${cv.v}</span><span class="ring-unit">${cv.u}</span></div>
+      </div>
+      <div class="c-info">
+        <div class="c-label">${t.label}</div>
+        <div class="c-status ${si.cls}">${si.txt} · ${timeAgo(last?.ts)}</div>
+        <button class="mark-btn" id="mb-${t.id}" onclick="doLog('${t.id}')">Mark done</button>
+      </div>
+    </div>`;
+  }
+  return banners+(cards||'<div class="empty">All trackers are off.<br>Enable them in settings.</div>');
+}
+
+function histHTML(){
+  const all=[];
+  for(const t of TRK){for(const l of appData.trackers[t.id].logs)all.push({...l,label:t.label,col:t.col});}
+  all.sort((a,b)=>b.ts-a.ts);
+  if(!all.length)return'<div class="empty">No logs yet.<br>Tap "Mark done" on any tracker.</div>';
+  const groups={};
+  all.slice(0,80).forEach(l=>{
+    const k=new Date(l.ts).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});
+    if(!groups[k])groups[k]=[];groups[k].push(l);
+  });
+  return Object.entries(groups).map(([d,items])=>`
+    <div class="sec-lbl">${d}</div>
+    <div class="hist-list">
+      ${items.map(l=>`<div class="hist-item">
+        <div class="hist-dot" style="background:${l.col}"></div>
+        <span class="hist-text">${l.label}</span>
+        <span class="hist-time">${new Date(l.ts).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+function settHTML(){
+  const lt=appData.trackers.litter;
+  const th=litterThresh(lt),thD=Math.round(th/24),wD=Math.round(th*LITTER_WARN/24);
+  return`
+  <div class="sec-lbl">Cat profile</div>
+  <div class="s-block">
+    <div class="s-row">
+      <div class="s-lbl">Name</div>
+      <input type="text" value="${appData.name}" onchange="saveName(this.value)" oninput="saveName(this.value)" maxlength="20" style="width:130px;text-align:right"/>
+    </div>
+  </div>
+
+  <div class="sec-lbl" style="margin-top:8px">Litter box</div>
+  <div class="s-block">
+    <div class="s-row">
+      <div><div class="s-lbl">Litter type</div><div class="s-sub">Sets the change schedule</div></div>
+      <select onchange="saveLitterType(this.value)">
+        <option value="clumping" ${lt.litterType==='clumping'?'selected':''}>Clumping clay</option>
+        <option value="nonclumping" ${lt.litterType==='nonclumping'?'selected':''}>Non-clumping</option>
+        <option value="silica" ${lt.litterType==='silica'?'selected':''}>Silica / crystal</option>
+      </select>
+    </div>
+    <div class="s-row">
+      <div class="s-lbl">Number of cats</div>
+      <select onchange="saveNumCats(this.value)">
+        <option value="1" ${lt.numCats===1?'selected':''}>1 cat</option>
+        <option value="2" ${lt.numCats===2?'selected':''}>2 cats</option>
+        <option value="3" ${lt.numCats>=3?'selected':''}>3+ cats</option>
+      </select>
+    </div>
+    <div class="s-row">
+      <div><div class="s-lbl">Full change due</div><div class="s-sub"><span class="badge">vet-researched</span></div></div>
+      <span class="s-val">Every ${thD} days</span>
+    </div>
+    <div class="s-row">
+      <div><div class="s-lbl" style="color:var(--orange)">Orange warning</div><div class="s-sub">Heads-up to start thinking about it</div></div>
+      <span class="s-val" style="color:var(--orange)">Day ${wD}</span>
+    </div>
+    <div class="s-row">
+      <div><div class="s-lbl" style="color:var(--red)">Red alert</div><div class="s-sub">Overdue — change it now</div></div>
+      <span class="s-val" style="color:var(--red)">Day ${thD}+</span>
+    </div>
+    <div class="s-row">
+      <div class="s-lbl">Tracker enabled</div>
+      <label class="tgl"><input type="checkbox" ${lt.on?'checked':''} onchange="saveToggle('litter',this.checked)"/>
+        <div class="t-track"></div><div class="t-thumb"></div></label>
+    </div>
+  </div>
+
+  <div class="sec-lbl" style="margin-top:8px">Food & water</div>
+  <div class="s-block">
+    ${['food','water'].map(id=>{
+      const tr=appData.trackers[id],lbl=TRK.find(x=>x.id===id).label;
+      return`<div class="s-row">
+        <div><div class="s-lbl">${lbl}</div>
+          <div class="s-sub">Remind after
+            <input type="number" min="1" max="48" value="${tr.h}" onchange="saveH('${id}',this.value)"
+              style="width:44px;padding:3px 6px;font-size:13px;display:inline;text-align:center"/>
+          h</div></div>
+        <label class="tgl"><input type="checkbox" ${tr.on?'checked':''} onchange="saveToggle('${id}',this.checked)"/>
+          <div class="t-track"></div><div class="t-thumb"></div></label>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="sec-lbl" style="margin-top:8px">Account</div>
+  <div class="s-block">
+    <div class="s-row logout-row" onclick="doLogout()">
+      <span class="s-lbl">Sign out</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--sub)"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+    </div>
+    <div class="s-row" id="del-row" onclick="doDeleteAccount()" style="cursor:pointer">
+      <span class="s-lbl del-lbl" id="del-lbl">Delete account</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--red)"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    </div>
+  </div>
+  <div style="height:8px"></div>`;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function render(){
+  const root=document.getElementById('app');
+  const token=localStorage.getItem(TOKEN_KEY);
+
+  if(!token){root.innerHTML=authHTML();return;}
+  if(!appData){root.innerHTML=`
+    <div class="header"><div class="header-inner"><div class="av">${PAW}</div>
+      <div><div class="cat-name">Cat Care</div><div class="cat-sub">Loading…</div></div></div></div>
+    <div class="scroll">${loadingHTML()}</div>`;
+    return;
+  }
+
+  const anyIssue=TRK.some(t=>{const tr=appData.trackers[t.id];return tr.on&&prog(t.id,tr)>=warnAt(t.id);});
+  const inner=view==='home'?homeHTML():view==='history'?histHTML():settHTML();
+
+  root.innerHTML=`
+    <div class="header"><div class="header-inner"><div class="av">${PAW}</div>
+      <div><div class="cat-name">${appData.name}</div>
+        <div class="cat-sub">${anyIssue?'Needs attention':'Everything looks great'}</div></div></div></div>
+    <div class="scroll">${inner}</div>
+    <nav class="nav">
+      ${['home','history','settings'].map((v,i)=>`
+        <div class="nav-item ${view===v?'on':''}" onclick="goTo('${v}')">
+          <div style="color:${view===v?'var(--blue)':'var(--sub)'};display:flex;align-items:center;justify-content:center">${NAV_I[v]}</div>
+          <span class="nav-label" style="color:${view===v?'var(--blue)':'var(--sub)'}">${['Home','History','Settings'][i]}</span>
+        </div>`).join('')}
+    </nav>`;
+}
+
+// ── Auth actions ───────────────────────────────────────────────────────────────
+window.toggleAuthView=function(){
+  authView=authView==='login'?'register':'login';render();
+};
+
+window.submitAuth=async function(){
+  const email=document.getElementById('f-email')?.value?.trim();
+  const pass=document.getElementById('f-pass')?.value;
+  const btn=document.getElementById('auth-btn');
+  const err=document.getElementById('auth-err');
+  if(!email||!pass)return showErr(err,'Please fill in all fields.');
+  if(authView==='register'&&pass.length<6)return showErr(err,'Password must be at least 6 characters.');
+  btn.disabled=true;btn.textContent='Please wait…';
+  try{
+    const data=await api('POST',authView==='login'?'/api/login':'/api/register',{email,password:pass});
+    localStorage.setItem(TOKEN_KEY,data.token);
+    await loadData();
+  }catch(e){
+    btn.disabled=false;btn.textContent=authView==='login'?'Sign in':'Create account';
+    showErr(err,e.message);
+  }
+};
+
+function showErr(el,msg){el.textContent=msg;el.classList.add('show');}
+
+// ── App actions ────────────────────────────────────────────────────────────────
+async function loadData(){
+  try{
+    appData=await api('GET','/api/state');
+    view='home';render();
+  }catch(e){
+    if(e.message.includes('Invalid')||e.message.includes('token')){
+      localStorage.removeItem(TOKEN_KEY);appData=null;render();
+    }
+  }
+}
+
+window.goTo=v=>{view=v;render();};
+
+window.doLog=async function(id){
+  const btn=document.getElementById('mb-'+id);
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    await api('POST',`/api/log/${id}`);
+    appData.trackers[id].logs.push({ts:Date.now()});
+    if(btn){btn.classList.add('done');btn.textContent='Logged!';setTimeout(render,1200);}
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Mark done';}
+  }
+};
+
+window.saveName=async function(v){
+  appData.name=v||'My Cat';
+  const el=document.querySelector('.cat-name');if(el)el.textContent=appData.name;
+  await api('PUT','/api/settings',{catName:v||'My Cat'}).catch(()=>{});
+};
+
+window.saveLitterType=async function(v){
+  appData.trackers.litter.litterType=v;render();
+  await api('PUT','/api/settings',{litterType:v}).catch(()=>{});
+};
+
+window.saveNumCats=async function(v){
+  appData.trackers.litter.numCats=parseInt(v);render();
+  await api('PUT','/api/settings',{numCats:parseInt(v)}).catch(()=>{});
+};
+
+window.saveH=async function(id,v){
+  const h=Math.max(1,Math.min(48,parseInt(v)||1));
+  appData.trackers[id].h=h;
+  const body=id==='food'?{foodH:h}:{waterH:h};
+  await api('PUT','/api/settings',body).catch(()=>{});
+};
+
+window.saveToggle=async function(id,v){
+  appData.trackers[id].on=v;render();
+  const body=id==='litter'?{litterOn:v}:id==='food'?{foodOn:v}:{waterOn:v};
+  await api('PUT','/api/settings',body).catch(()=>{});
+};
+
+let delConfirm=false,delTimer=null;
+window.doDeleteAccount=async function(){
+  if(!delConfirm){
+    delConfirm=true;
+    const el=document.getElementById('del-lbl');if(el)el.textContent='Tap again to confirm';
+    delTimer=setTimeout(()=>{delConfirm=false;if(view==='settings')render();},3000);
+    return;
+  }
+  clearTimeout(delTimer);delConfirm=false;
+  try{
+    await api('DELETE','/api/account');
+    localStorage.removeItem(TOKEN_KEY);appData=null;render();
+  }catch(e){}
+};
+
+window.doLogout=function(){
+  localStorage.removeItem(TOKEN_KEY);appData=null;authView='login';render();
+};
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+(async()=>{
+  const token=localStorage.getItem(TOKEN_KEY);
+  if(token){render();await loadData();}
+  else{render();}
+})();
+</script>
+</body>
+</html>
